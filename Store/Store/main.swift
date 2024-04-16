@@ -59,13 +59,25 @@ class Receipt {
         }
         return totalAmount
     }
+    
+    func itemCount(_ sku : SKU) -> Int {
+        var cnt = 0
+        for skuItem in listOfSKU {
+            if skuItem.name == sku.name && sku.price() == skuItem.price() {
+                cnt += 1
+            }
+        }
+        return cnt
+    }
 }
 
 class Register {
     var receipt : Receipt
+    var discount : PricingScheme
     
-    init() {
+    init(discount : PricingScheme = PricingScheme()) {
         self.receipt = Receipt()
+        self.discount = discount
     }
     
     func subtotal () -> Int {
@@ -79,7 +91,37 @@ class Register {
     }
     
     func scan (_ sku : SKU) {
-        receipt.addSKU(sku)
+        if discount.isIncluded(sku) && receipt.itemCount(sku) % 3 == 2 {
+                receipt.addSKU(sku)
+                receipt.addSKU(Item(name: "\(sku.name)Buy2Get1Discount", priceEach: sku.price()*(-1)))
+        }else{
+            receipt.addSKU(sku)
+        }
+    }
+}
+
+class PricingScheme {
+    var discount : [SKU]
+    
+    init() {
+        self.discount = []
+    }
+    
+    func addBuyTwoGetOneItem(_ sku : SKU) {
+        discount.append(sku)
+    }
+    
+    func getDiscountItems() -> [SKU] {
+        return discount
+    }
+    
+    func isIncluded(_ sku : SKU) -> Bool {
+        for skuItem in discount {
+            if skuItem.name == sku.name && sku.price() == skuItem.price() {
+                return true
+            }
+        }
+        return false
     }
 }
 
